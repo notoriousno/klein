@@ -280,3 +280,59 @@ class KleinResource(Resource):
         d.addCallback(write_response).addErrback(log.err, _why="Unhandled Error writing response")
 
         return server.NOT_DONE_YET
+
+
+
+class BytesDict(object):
+
+    def __init__(self, args=None):
+        self._args = {} if not args else args
+
+    def __contains__(self, item):
+        item = ensure_utf8_bytes(item)
+        return item in self._args
+
+    def __delitem__(self, key):
+        key = ensure_utf8_bytes(key)
+        del self._args[key]
+
+    def __getattr(self, dict_attr):
+        return getattr(self._args, dict_attr)
+
+    def __getitem__(self, key):
+        key = ensure_utf8_bytes(key)
+        return self._args[key]
+
+    def __len__(self):
+        return len(self._args)
+
+    def __iter__(self):
+        return iter(self._args)
+
+    def __setitem__(self, key, value):
+        key = ensure_utf8_bytes(key)
+        self._args.setdefault(key, []).append(value)
+
+    def get(self, key, default=None):
+        key = ensure_utf8_bytes(key)
+        return self._args.get(key, default)
+
+    def getOne(self, key):
+        key = ensure_utf8_bytes(key)
+        values = self._args[key]
+        if len(values) != 1:
+            raise ValueError('Too many values')
+        return values[0]
+
+
+
+class KleinHTTPRequest(server.Request):
+
+    _arguments = None
+
+    @property
+    def arguments(self):
+        if not self._arguments:
+            self._arguments = BytesDict(self.args)
+        return self._arguments
+
