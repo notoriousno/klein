@@ -324,6 +324,9 @@ class BytesDict(object):
             raise ValueError('Too many values')
         return values[0]
 
+    def keys(self):
+        return self._args.keys()
+
 
 
 class KleinHTTPRequest(server.Request):
